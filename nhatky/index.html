@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nhật Ký Cảm Tạ</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Cảm Tạ">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #e07a5f;
+            --primary-light: #f4a261;
+            --secondary: #81b29a;
+            --bg-color: #ffffff; /* Nền trắng sáng sủa */
+            --card-bg: #ffffff;
+            --text-main: #2b2d42;
+            --text-muted: #6c757d;
+            --border-radius: 16px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        header {
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        header h1 { color: var(--primary); font-size: 1.5rem; font-weight: 700; margin-bottom: 2px; }
+        header p { color: var(--text-muted); font-size: 0.85rem; font-style: italic; }
+
+        /* Thanh tab điều hướng */
+        .nav-tabs {
+            display: flex;
+            background: #f8fafc;
+            padding: 4px;
+            border-radius: 12px;
+            gap: 4px;
+            border: 1px solid #eee;
+        }
+        .nav-tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .nav-tab-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid #eaeaea;
+        }
+
+        /* Đăng nhập */
+        #loginScreen {
+            text-align: center;
+            padding: 30px 15px;
+            margin-top: 20px;
+        }
+        #loginScreen h2 { margin-bottom: 10px; color: var(--primary); font-size: 1.3rem; }
+        #loginScreen input {
+            width: 100%; max-width: 300px; padding: 12px; border: 1px solid #ddd;
+            border-radius: 8px; font-size: 1rem; margin-bottom: 15px; text-align: center;
+        }
+        #loginScreen button {
+            background: var(--primary); color: white; border: none; padding: 12px 25px;
+            border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: bold; width: 100%; max-width: 300px;
+        }
+
+        #mainApp { display: none; flex-direction: column; gap: 14px; }
+
+        .user-greeting {
+            font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .user-greeting span { color: var(--primary); font-weight: 600; }
+
+        .input-section textarea {
+            width: 100%; height: 100px; padding: 12px; border: 1px solid #e2e8f0;
+            border-radius: 12px; font-size: 0.95rem; font-family: inherit; resize: none;
+            background: #fafaf8; color: var(--text-main);
+        }
+        .input-section textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+        .tags-container { display: flex; gap: 6px; margin: 10px 0 12px 0; flex-wrap: wrap; }
+        .tag-btn {
+            background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 20px;
+            font-size: 0.8rem; color: var(--text-muted); cursor: pointer; font-family: inherit;
+        }
+        .tag-btn.active, .tag-btn:hover { background: var(--primary); color: white; }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; border: none; width: 100%; padding: 12px; border-radius: 12px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+
+        /* Thư gửi mẹ */
+        .letter-intro { text-align: center; margin-bottom: 15px; line-height: 1.5; }
+        .letter-intro h3 { color: var(--primary); font-size: 1.2rem; margin-bottom: 10px; font-weight: 700; }
+        .bible-verse {
+            background: #fafaf8; border-left: 4px solid var(--primary);
+            padding: 12px 14px; border-radius: 0 10px 10px 0; margin-bottom: 12px; text-align: left;
+        }
+        .bible-verse p { font-size: 0.85rem; color: var(--text-main); font-style: italic; margin-bottom: 4px; }
+        .bible-verse cite { display: block; font-size: 0.75rem; color: var(--primary); font-weight: 600; text-align: right; font-style: normal; }
+        .letter-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; }
+        .external-link-btn {
+            display: block; width: 100%; background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; text-align: center; padding: 12px; border-radius: 10px;
+            text-decoration: none; font-weight: 600; font-size: 0.95rem;
+        }
+
+        /* Lịch */
+        .calendar-card {
+            background: var(--card-bg); border-radius: var(--border-radius); padding: 16px;
+            box-shadow: var(--shadow); border: 1px solid #eaeaea;
+        }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .calendar-header h3 { font-size: 0.95rem; font-weight: 600; }
+        .calendar-nav-btn {
+            background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%;
+            cursor: pointer; font-weight: bold; color: var(--text-main); display: flex;
+            align-items: center; justify-content: center;
+        }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .day-cell {
+            aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 8px; font-size: 0.85rem; background: #f8fafc; color: var(--text-main); position: relative;
+        }
+        .day-cell.has-entry { background: #e6f4ea; border: 1px solid #ceead6; cursor: pointer; }
+        .check-icon { font-size: 0.6rem; color: #137333; margin-top: 1px; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; padding: 15px; z-index: 1000; }
+        .modal-content { background: white; padding: 18px; border-radius: 16px; width: 100%; max-width: 380px; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .close-modal { position: absolute; top: 10px; right: 12px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); }
+
+        /* Popup tâm trạng */
+        .mood-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; padding: 15px; z-index: 2000; }
+        .mood-content { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .mood-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+        .mood-item { background: #fdfbf7; border: 2px solid #eee; border-radius: 12px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .mood-item:hover { border-color: var(--primary); background: #fff8f5; }
+        .mood-icon { font-size: 1.6rem; }
+        .mood-label { font-size: 0.8rem; font-weight: 600; color: var(--text-main); }
+        .mood-message { margin-top: 12px; font-size: 0.9rem; color: var(--primary); font-weight: 500; min-height: 40px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🌸 Nhật Ký Cảm Tạ</h1>
+            <p>Kỳ tích của một dòng Cảm Tạ</p>
+        </header>
+
+        <!-- ĐĂNG NHẬP -->
+        <div class="card" id="loginScreen">
+            <h2>Chào mừng bạn đến kho cảm tạ</h2>
+            <p style="margin-bottom: 12px; color: var(--text-muted); font-size: 0.85rem;">Vui lòng nhập tên của bạn để bắt đầu:</p>
+            <input type="text" id="memberNameInput" placeholder="Ví dụ: Nguyễn Văn Nam">
+            <br>
+            <button onclick="registerMember()">Vào ứng dụng</button>
+        </div>
+
+        <!-- GIAO DIỆN CHÍNH -->
+        <div id="mainApp">
+            <div class="nav-tabs">
+                <button class="nav-tab-btn active" onclick="switchTab('journal', this)">📝 Nhật Ký Cảm Tạ</button>
+                <button class="nav-tab-btn" onclick="checkLetterPassword(this)">💌 Thư Gửi Mẹ</button>
+            </div>
+
+            <!-- TAB 1: NHẬT KÝ -->
+            <div id="tabJournal" class="tab-content active">
+                <div class="card input-section">
+                    <div class="user-greeting">
+                        <span>Xin chào, <strong id="displayName"></strong>!</span>
+                        <a href="#" onclick="logout()" style="color: var(--text-muted); font-size: 0.75rem;">Đổi tên khác</a>
+                    </div>
+                    <textarea id="gratitudeInput" placeholder="Hôm nay bạn cảm thấy biết ơn điều gì?..."></textarea>
+                    
+                    <div class="tags-container" id="tagSelector">
+                        <button class="tag-btn active" data-tag="Cuộc sống">✨ Cuộc sống</button>
+                        <button class="tag-btn" data-tag="Bản thân">🌱 Bản thân</button>
+                        <button class="tag-btn" data-tag="Công việc">💼 Công việc</button>
+                        <button class="tag-btn" data-tag="Gia đình">❤️ Gia đình</button>
+                    </div>
+
+                    <button class="submit-btn" onclick="addEntry()">Lưu lại niềm biết ơn</button>
+                </div>
+
+                <!-- LỊCH -->
+                <div class="calendar-card">
+                    <div class="calendar-header">
+                        <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
+                        <h3 id="calendarMonthYear">Tháng 10, 2026</h3>
+                        <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
+                    </div>
+                    
+                    <div class="weekdays">
+                        <div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div><div>CN</div>
+                    </div>
+                    <div class="days-grid" id="daysGrid"></div>
+                </div>
+            </div>
+
+            <!-- TAB 2: THƯ GỬI MẸ -->
+            <div id="tabLetter" class="tab-content">
+                <div class="card" id="letterRealContent" style="display: none;">
+                    <div class="letter-intro">
+                        <h3>💌 Thư gửi Mẹ Thiên Thượng</h3>
+                        <div class="bible-verse">
+                            <p>“Đừng lo lắng về bất cứ điều gì, nhưng trong mọi việc, hãy cầu nguyện và nài xin với lòng biết ơn, trình bày những điều mình mong muốn lên Đức Chúa Trời.”</p>
+                            <cite>— Phi-líp 4:6</cite>
+                        </div>
+                        <p class="letter-desc">Tôi rất cảm kích nếu bạn có thể viết một lá thư mỗi ngày, với độ dài tối đa 2.000 ký tự.</p>
+                    </div>
+                    <a href="https://h4.watv.org/" target="_blank" class="external-link-btn">✨ Mở Trang Viết Thư Ngay</a>
+                </div>
+
+                <div class="card" id="letterFakeContent" style="display: none;">
+                    <div class="letter-intro">
+                        <h3>🌸 Góc Cảm Tạ Bình An</h3>
+                        <p>Mỗi ngày trôi qua là một hồng ân để ta sống chậm lại và tri ân cuộc đời.</p>
+                    </div>
+                    <textarea style="width:100%; height:90px; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Ghi chép nhanh đôi dòng suy ngẫm..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP TÂM TRẠNG -->
+    <div class="mood-modal" id="moodModal">
+        <div class="mood-content">
+            <h3 style="color: var(--primary); margin-bottom: 4px; font-size: 1rem;">🌟 Hôm nay quý vị như thế nào?</h3>
+            <p style="font-size: 0.75rem; color: var(--text-muted);">Chọn cảm xúc để nhận lời chúc bình an:</p>
+            
+            <div class="mood-grid">
+                <div class="mood-item" onclick="selectMood('happy')">
+                    <div class="mood-icon">😊</div>
+                    <div class="mood-label">Hạnh phúc</div>
+                </div>
+                <div class="mood-item" onclick="selectMood('joyful')">
+                    <div class="mood-icon">😄</div>
+                    <div class="mood-label">Vui vẻ</div>
+                </div>
+                <div class="mood-item" onclick="selectMood('anxious')">
+                    <div class="mood-icon">😟</div>
+                    <div class="mood-label">Lo lắng</div>
+                </div>
+                <div class="mood-item" onclick="selectMood('persecuted')">
+                    <div class="mood-icon">🛡️</div>
+                    <div class="mood-label">Bắt bớ</div>
+                </div>
+            </div>
+
+            <div class="mood-message" id="moodMessageContainer"></div>
+            <button id="closeMoodBtn" style="display: none; margin-top: 10px; background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;" onclick="closeMoodModal()">Bắt đầu viết nhật ký ✨</button>
+        </div>
+    </div>
+
+    <!-- MODAL LỊCH -->
+    <div class="modal" id="dayModal" onclick="closeModalOutside(event)">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <h3 id="modalTitle" style="margin-bottom: 12px; color: var(--primary); font-size: 1rem;">Nhật ký ngày</h3>
+            <div id="modalBody" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxc25g-AHZ26w9PsFD0nLOVoD5rUGnpgnbtyoBiZvskbFunnmLXco07hxH2zSKD3nR/exec";
+
+        let selectedTag = 'Cuộc sống';
+        let currentDate = new Date();
+        let allEntries = []; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedName = localStorage.getItem('gratitude_member_name');
+            if (savedName) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'flex';
+                document.getElementById('displayName').innerText = savedName;
+                fetchEntries();
+                checkDailyMoodPrompt();
+            }
+        });
+
+        function checkLetterPassword(btnElement) {
+            const pass = prompt("🔐 Nhập mật khẩu để truy cập Thư Gửi Mẹ:");
+            if (pass === null) return; 
+
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+            btnElement.classList.add('active');
+            document.getElementById('tabLetter').classList.add('active');
+
+            const realContent = document.getElementById('letterRealContent');
+            const fakeContent = document.getElementById('letterFakeContent');
+
+            if (pass === "az2026") {
+                realContent.style.display = 'block';
+                fakeContent.style.display = 'none';
+            } else if (pass === "123456") {
+                realContent.style.display = 'none';
+                fakeContent.style.display = 'block';
+            } else {
+                alert("❌ Mật khẩu không chính xác! Đang hiển thị chế độ bảo vệ.");
+                realContent.style.display = 'none';
+                fakeContent.style.display = 'block';
+            }
+        }
+
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+            btnElement.classList.add('active');
+            if (tabName === 'journal') {
+                document.getElementById('tabJournal').classList.add('active');
+            }
+        }
+
+        function checkDailyMoodPrompt() {
+            const todayStr = new Date().toDateString();
+            const lastMoodDate = localStorage.getItem('last_mood_prompt_date');
+            if (lastMoodDate !== todayStr) {
+                document.getElementById('moodModal').style.display = 'flex';
+            }
+        }
+
+        function selectMood(type) {
+            const container = document.getElementById('moodMessageContainer');
+            const closeBtn = document.getElementById('closeMoodBtn');
+            container.innerHTML = "";
+
+            let message = "";
+            if (type === 'happy') message = "🌸 Nguyện xin niềm hạnh phúc ngập tràn trong tâm hồn quý vị hôm nay, nhân lên bội phần phước lành!";
+            else if (type === 'joyful') message = "😄 Nụ cười và sự tươi vui của quý vị là nguồn năng lượng tuyệt vời thắp sáng mọi không gian!";
+            else if (type === 'anxious') message = "🌿 Hãy gác lại mọi âu lo, hít thở thật sâu. Sự bình an tĩnh lặng đang ở ngay đây cùng quý vị.";
+            else if (type === 'persecuted') message = "🛡️ Vững vàng đức tin và sự kiên định nhé! Sức mạnh thiêng liêng luôn che chở quý vị qua mọi nghịch cảnh.";
+
+            let i = 0;
+            function typeWriter() {
+                if (i < message.length) {
+                    container.innerHTML += message.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 15);
+                } else {
+                    closeBtn.style.display = 'inline-block';
+                }
+            }
+            typeWriter();
+            localStorage.setItem('last_mood_prompt_date', new Date().toDateString());
+        }
+
+        function closeMoodModal() { document.getElementById('moodModal').style.display = 'none'; }
+
+        function registerMember() {
+            const nameInput = document.getElementById('memberNameInput');
+            const name = nameInput.value.trim();
+            if (!name) { alert('Vui lòng nhập tên của bạn!'); return; }
+
+            localStorage.setItem('gratitude_member_name', name);
+            fetch(SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sheetName: "ThanhVien", name: name })
+            }).catch(err => console.log(err));
+
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+            document.getElementById('displayName').innerText = name;
+            fetchEntries();
+            checkDailyMoodPrompt();
+        }
+
+        function logout() { localStorage.removeItem('gratitude_member_name'); location.reload(); }
+
+        const tagButtons = document.querySelectorAll('.tag-btn');
+        tagButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tagButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedTag = btn.getAttribute('data-tag');
+            });
+        });
+
+        function fetchEntries() {
+            fetch(SCRIPT_URL)
+                .then(res => res.json())
+                .then(data => { allEntries = data; renderCalendar(); })
+                .catch(err => {
+                    allEntries = JSON.parse(localStorage.getItem('local_mock_entries')) || [];
+                    renderCalendar();
+                });
+        }
+
+        function addEntry() {
+            const input = document.getElementById('gratitudeInput');
+            const text = input.value.trim();
+            const currentName = localStorage.getItem('gratitude_member_name');
+
+            if (!text) { alert('Vui lòng viết điều gì đó bạn cảm ơn nhé!'); return; }
+
+            // Lấy chính xác ngày giờ địa phương Việt Nam, chống lệch múi giờ sang ngày hôm sau
+            const now = new Date();
+            const dayStr = String(now.getDate()).padStart(2, '0');
+            const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+            const yearStr = now.getFullYear();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+            const dateStringFormatted = `${dayStr}/${monthStr}/${yearStr}, ${timeStr}`;
+
+            const newEntry = { name: currentName, text: text, tag: selectedTag, dateString: dateStringFormatted };
+
+            allEntries.unshift(newEntry);
+            localStorage.setItem('local_mock_entries', JSON.stringify(allEntries));
+
+            fetch(SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sheetName: "NhatKy", name: currentName, text: text, tag: selectedTag })
+            }).catch(err => console.log(err));
+
+            input.value = '';
+            renderCalendar();
+
+            confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+            alert("🎉 Đã nạp thành công phước lành vào kho cảm tạ rồi! 🥳✨");
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+            document.getElementById('calendarMonthYear').innerText = `${monthNames[month]}, ${year}`;
+
+            const daysGrid = document.getElementById('daysGrid');
+            daysGrid.innerHTML = '';
+
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            const activeDays = {};
+            allEntries.forEach(entry => {
+                if (!entry.dateString) return;
+                const parts = entry.dateString.split(',')[0].trim().split('/');
+                if (parts.length === 3) {
+                    const eDay = parseInt(parts[0], 10);
+                    const eMonth = parseInt(parts[1], 10) - 1;
+                    const eYear = parseInt(parts[2], 10);
+                    if (eYear === year && eMonth === month) {
+                        if (!activeDays[eDay]) activeDays[eDay] = [];
+                        activeDays[eDay].push(entry);
+                    }
+                }
+            });
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.classList.add('day-cell');
+                emptyCell.style.background = 'transparent';
+                daysGrid.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                cell.classList.add('day-cell');
+                cell.innerText = day;
+
+                if (activeDays[day]) {
+                    cell.classList.add('has-entry');
+                    const check = document.createElement('div');
+                    check.classList.add('check-icon');
+                    check.innerHTML = '✓';
+                    cell.appendChild(check);
+                    cell.onclick = () => requestPasswordAndOpenDay(day, month, year, activeDays[day]);
+                }
+                daysGrid.appendChild(cell);
+            }
+        }
+
+        function changeMonth(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            renderCalendar();
+        }
+
+        function requestPasswordAndOpenDay(day, month, year, dayEntries) {
+            const pass = prompt("🔐 Nhập mật khẩu để xem nhật ký ngày này:");
+            if (pass === null) return;
+
+            const modal = document.getElementById('dayModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+
+            if (pass === "az2026") {
+                modalTitle.innerText = `🌸 Nhật ký ngày ${day < 10 ? '0'+day : day}/${month + 1 < 10 ? '0'+(month+1) : month+1}/${year}`;
+                let html = '';
+                dayEntries.forEach(entry => {
+                    html += `<div style="background: #fafaf8; padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary);"><div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;"><strong>${entry.name}</strong> lúc ${entry.dateString}</div><div style="font-size: 0.9rem;">${escapeHtml(entry.text)}</div></div>`;
+                });
+                modalBody.innerHTML = html;
+                modal.style.display = 'flex';
+            } else if (pass === "123456") {
+                modalTitle.innerText = `🌸 Nhật ký ngày ${day < 10 ? '0'+day : day}/${month + 1 < 10 ? '0'+(month+1) : month+1}/${year}`;
+                modalBody.innerHTML = `<div style="background: #f0f4f8; padding: 10px; border-radius: 8px; border-left: 3px solid #6c757d;"><div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;"><strong>Hệ Thống</strong></div><div style="font-size: 0.9rem;">Cảm ơn ánh nắng ban mai chiếu qua khung cửa sổ và những phút giây tĩnh lặng bình yên.</div></div>`;
+                modal.style.display = 'flex';
+            } else {
+                alert("❌ Mật khẩu không chính xác!");
+            }
+        }
+
+        function closeModal() { document.getElementById('dayModal').style.display = 'none'; }
+        function closeModalOutside(event) { if (event.target.id === 'dayModal') closeModal(); }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
